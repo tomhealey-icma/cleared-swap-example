@@ -676,7 +676,7 @@ public class ClearedSwapApp implements ActionListener  {
                 LocalDateTime localDateTime = LocalDateTime.now();
                 String eventDateTime = localDateTime.format(eventDateFormat);
 
-                ru.writeEventToFile("execution-business-event", eventDateTime, businessEvent);
+                ru.writeEventToFile("irs-execution-business-event", eventDateTime, businessEvent);
 
                 clearedSwapTradeTableModel.addTrade(businessEvent);
 
@@ -795,7 +795,7 @@ public class ClearedSwapApp implements ActionListener  {
                 LocalDateTime localDateTime = LocalDateTime.now();
                 String eventDateTime = localDateTime.format(eventDateFormat);
 
-                ru.writeEventToFile("execution-business-event", eventDateTime, businessEvent);
+                ru.writeEventToFile("irs-execution-business-event", eventDateTime, businessEvent);
 
                 //this.loadTrades();
 
@@ -895,7 +895,7 @@ public class ClearedSwapApp implements ActionListener  {
                 String eventDateTime = localDateTime.format(eventDateFormat);
 
                 try {
-                    ru.writeEventToFile("execution-business-event", eventDateTime, businessEvent);
+                    ru.writeEventToFile("irs-execution-business-event", eventDateTime, businessEvent);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
