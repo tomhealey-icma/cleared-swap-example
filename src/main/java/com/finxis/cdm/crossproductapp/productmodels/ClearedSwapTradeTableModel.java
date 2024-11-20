@@ -58,10 +58,47 @@ public class ClearedSwapTradeTableModel extends AbstractTableModel {
         trade.tradeDate= cdmTrade.getTradeDate().getValue().toString();
         trade.fixedRatePayer = cdmTrade.getParty().get(1).getPartyId().get(0).getIdentifier().getValue().toString();
         trade.floatingRatePayer = cdmTrade.getParty().get(2).getPartyId().get(0).getIdentifier().getValue().toString();
+
         trade.fixedRate= cdmTrade.getTradableProduct().getProduct().getContractualProduct().getEconomicTerms().getPayout().getInterestRatePayout().get(1).getCashflowRepresentation().getPaymentCalculationPeriod().get(0).getCalculationPeriod().get(0).getFixedRate().toString();
         trade.floatingRateReference=cdmTrade.getTradableProduct().getProduct().getContractualProduct().getEconomicTerms().getPayout().getInterestRatePayout().get(0).getRateSpecification().getFloatingRate().getInitialRate().getValue().toString();
+
         trade.maturityDate=cdmTrade.getTradableProduct().getProduct().getContractualProduct().getEconomicTerms().getTerminationDate().getAdjustableDate().getAdjustedDate().getValue().toString();
-        trade.quantity="10,000,000";
+        trade.quantity=cdmTrade.getTradableProduct().getTradeLot().get(0).getPriceQuantity().get(0).getQuantity().get(0).getValue().getValue().toString();
+
+
+        int row = rowToTrade.size();
+
+        rowToTrade.put(row, trade);
+        idToRow.put(trade.dealId, row);
+        idToTrade.put(trade.dealId, trade);
+
+        fireTableRowsInserted(row, row);
+    }
+
+    public void addCdsTrade(String businessEventStr) throws JsonProcessingException {
+
+        //CdmTradeElements cdmTradeElements = new CdmTradeElements();
+
+        ObjectMapper rosettaObjectMapper = RosettaObjectMapper.getNewRosettaObjectMapper();
+        BusinessEvent businessEvent = new BusinessEvent.BusinessEventBuilderImpl();
+        businessEvent = rosettaObjectMapper.readValue(businessEventStr, businessEvent.getClass());
+
+        cdm.event.common.Trade cdmTrade = businessEvent.getAfter().get(0).getTrade();
+
+        EconomicTerms ecomonicTerms = cdmTrade.getTradableProduct().getProduct().getContractualProduct().getEconomicTerms();
+        String tradeIdentifier = cdmTrade.getTradeIdentifier().get(0).getAssignedIdentifier().get(0).getIdentifier().getValue().toString();
+
+        ClearedSwapModel trade = new ClearedSwapModel();
+        trade.dealId = tradeIdentifier;
+        trade.tradeDate= cdmTrade.getTradeDate().getValue().toString();
+        trade.fixedRatePayer = cdmTrade.getParty().get(1).getPartyId().get(0).getIdentifier().getValue().toString();
+        trade.floatingRatePayer = cdmTrade.getParty().get(2).getPartyId().get(0).getIdentifier().getValue().toString();
+
+        trade.fixedRate= cdmTrade.getTradableProduct().getProduct().getContractualProduct().getEconomicTerms().getPayout().getInterestRatePayout().get(0).getCashflowRepresentation().getPaymentCalculationPeriod().get(0).getCalculationPeriod().get(0).getFixedRate().toString();
+        trade.floatingRateReference="";
+
+        trade.maturityDate=cdmTrade.getTradableProduct().getProduct().getContractualProduct().getEconomicTerms().getTerminationDate().getAdjustableDate().getAdjustedDate().getValue().toString();
+        trade.quantity=cdmTrade.getTradableProduct().getTradeLot().get(0).getPriceQuantity().get(0).getQuantity().get(0).getValue().getValue().toString();
 
 
         int row = rowToTrade.size();

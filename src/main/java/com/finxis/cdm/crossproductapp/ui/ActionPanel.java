@@ -219,15 +219,13 @@ public class ActionPanel extends JPanel implements Observer {
                 }else if (fileType.equals(".csv")){
                     LoadCsvNewTrade lcsv = new LoadCsvNewTrade();
                     try {
-                        wfs = lcsv.createNewTradeFromCsv1(loadFile);
-                        lcsv.createNewTradeFromCsv2(loadFile);
+                        wfs = lcsv.createClearedSwapTradeFromCsv1(loadFile);
+                        lcsv.createClearedSwapTradeFromCsv2(loadFile);
                     } catch (ParserConfigurationException e) {
                         throw new RuntimeException(e);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     } catch (SAXException e) {
-                        throw new RuntimeException(e);
-                    } catch (TransformerException e) {
                         throw new RuntimeException(e);
                     }
 

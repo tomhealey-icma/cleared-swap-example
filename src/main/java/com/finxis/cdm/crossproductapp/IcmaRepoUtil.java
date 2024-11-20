@@ -383,7 +383,7 @@ public class IcmaRepoUtil {
 				.toString();
 		File udir = new File(userDirectory);
 		File pudir = udir.getParentFile();
-		String eventlogs = pudir.getPath() + "/eventlogs";
+		String eventlogs = udir.getPath() + "/eventlogs";
 
 		File logFile = new File(eventlogs);
 		final File log_directory = logFile.getAbsoluteFile();
@@ -604,6 +604,23 @@ public class IcmaRepoUtil {
 		return jb;
 	}
 
+	public JComboBox addSecurities(JComboBox jb) {
+
+		jb.addItem(new com.finxis.cdm.crossproductapp.CItem("US718286AY36", "US718286AY36"));
+		jb.addItem(new com.finxis.cdm.crossproductapp.CItem("US715638AP79", "US715638AP79"));
+
+		return jb;
+	}
+
+	public JComboBox addReferenceObligation(JComboBox jb) {
+
+		jb.addItem(new com.finxis.cdm.crossproductapp.CItem("789AAEAE3", "789AAEAE3"));
+		jb.addItem(new com.finxis.cdm.crossproductapp.CItem("786B9BAB8", "786B9BAB8"));
+		jb.addItem(new com.finxis.cdm.crossproductapp.CItem("115CCBAP3", "115CCBAP3"));
+
+		return jb;
+	}
+
 	public JComboBox addDltPlatformType(JComboBox jb) {
 		jb.addItem(new com.finxis.cdm.crossproductapp.util.CItem("Local", "LOCAL"));
 		jb.addItem(new com.finxis.cdm.crossproductapp.util.CItem("Main Net", "MAINNET"));
@@ -737,6 +754,8 @@ class CdmEnumMap{
 
 		map.put("Repurchase Agreement", "REPURCHASE_AGREEMENT");
 		map.put("Buy/Sell-Back Agreement", "BUY/SELL_BACK_AGREEMENT");
+
+		map.put("USD-SOFR-COMPOUND","USD_SOFR_COMPOUND");
 
 		return map;
 	}

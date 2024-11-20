@@ -12,6 +12,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.finxis.cdm.crossproductapp.RepoExecutionCreation;
+import com.finxis.cdm.crossproductapp.productlifecycle.ClearedCdsSwapLifecycle;
+import com.finxis.cdm.crossproductapp.productlifecycle.ClearedSwapLifecycle;
+import com.finxis.cdm.crossproductapp.productmodels.CdsCsvModel;
+import com.finxis.cdm.crossproductapp.productmodels.ClearedCdsSwapModel;
+import com.finxis.cdm.crossproductapp.productmodels.ClearedSwapModel;
+import com.finxis.cdm.crossproductapp.productmodels.IrsCsvModel;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.regnosys.rosetta.common.hashing.GlobalKeyProcessStep;
@@ -43,7 +49,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.finxis.cdm.crossproductapp.util.*;
 import org.w3c.dom.Document;
@@ -326,6 +334,187 @@ public class LoadXmlNewTrade {
                         .build();
 
         return wf.getSteps().get(0);
+
+    }
+
+    public WorkflowStep createNewIrsTrade(IrsCsvModel irsm) throws IOException {
+
+
+        CdmUtil cdmUtil = new CdmUtil();
+        IcmaRepoUtil ru = new IcmaRepoUtil();
+        ClearedSwapLifecycle csl = new ClearedSwapLifecycle();
+        ClearedSwapModel csm = mapIrsCsvToSwapModel(irsm);
+
+        csl.createExecutionInstruction(csm);
+
+        ClearedSwapLifecycle clearedSwapLifecycle = new ClearedSwapLifecycle();
+        String businessEventJson=null;
+
+        TradeState tradeState = clearedSwapLifecycle.createExecution(csm);
+
+        ExecutionInstruction executionInstruction = clearedSwapLifecycle.createExecutionInstruction(csm);
+        PrimitiveInstruction primitiveInstruction = PrimitiveInstruction.builder()
+                .setExecution(executionInstruction)
+                .build();
+
+        BusinessEvent businessEvent = clearedSwapLifecycle.createExecutionBusinessEvent(tradeState, primitiveInstruction);
+
+        businessEventJson = RosettaObjectMapper.getNewRosettaObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(businessEvent);
+
+        String tDate = businessEvent.getEffectiveDate().toString().replaceAll("\\s", "") + "T00:00:00.000+00:00";
+        DateTimeFormatter formatter  = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz");
+        ZonedDateTime zdtWithZoneOffset = ZonedDateTime.parse(tDate, formatter);
+        ZonedDateTime zdtInLocalTimeline = zdtWithZoneOffset.withZoneSameInstant(ZoneId.systemDefault());
+        EventTimestamp eventTimestamp = new EventTimestamp.EventTimestampBuilderImpl()
+                .setDateTime(zdtWithZoneOffset);
+        Party buyer = businessEvent.getAfter().get(0).getTrade().getParty().get(0);
+        Party seller = businessEvent.getAfter().get(0).getTrade().getParty().get(1);
+        Workflow wf = Workflow.builder()
+                .setSteps(List.of(WorkflowStep.builder()
+                        .addParty(List.of(buyer,seller))
+                        .setBusinessEvent(businessEvent)
+                        .addTimestamp(eventTimestamp)
+                        .setPreviousWorkflowStepValue(null)))
+                .build();
+        return wf.getSteps().get(0);
+    }
+
+    public ClearedSwapModel mapIrsCsvToSwapModel(IrsCsvModel irsm){
+
+        CdmUtil cdmUtil = new CdmUtil();
+        IcmaRepoUtil ru = new IcmaRepoUtil();
+        Map<String, String> cdmMap = new HashMap<>();
+        CdmEnumMap map = new CdmEnumMap();
+        map.buildEnumMap(cdmMap);
+
+
+        ClearedSwapModel csm = new ClearedSwapModel();
+        csm.effectiveDate = converDateFormat(irsm.getED());
+        csm.maturityDate = converDateFormat(irsm.getMD());
+        csm.tradeDate = converDateFormat(irsm.getTD());
+        csm.customerAccount = irsm.getIM_ID();
+        csm.currency = irsm.getCurrency_Code();
+        csm.dealId = irsm.getDPX_Clearing_House_Key();
+        csm.centralCounterparty = irsm.getClearing_House_Code();
+
+        if(irsm.getIAS_ID().equals("")){ //Client receiving fixed
+            csm.fixedRatePayer = irsm.getClearing_House_Code();
+            csm.floatingRatePayer = irsm.getClient_ID();
+            csm.quantity = irsm.getREC_Leg_Notional();
+            csm.fixedRate = irsm.getREC_Fixed_Rate();
+            csm.payBusinessDayConvention = irsm.getPay_Bus_Convention();
+            csm.receiveBusinessDayConvention = irsm.getREC_Bus_Convention();
+            csm.floatingRateDayCountFraction = irsm.getPay_Accrual_Code();
+            csm.fixedRateDayCountFraction = irsm.getREC_Accrual_Code();
+            csm.floatingRateReference = "0.0";
+            csm.floatingRatePayFreq= irsm.getPay_CPN_Cycle();
+            csm.fixedRatePayFreq = irsm.getREC_CPN_Cycle();
+
+        }else{
+            csm.fixedRatePayer = irsm.getClient_ID();
+            csm.floatingRatePayer = irsm.getClearing_House_Code();
+            csm.quantity = irsm.getPAY_Leg_Notional();
+            csm.fixedRate = irsm.getPay_Fixed_Rate();
+            csm.payBusinessDayConvention = irsm.getREC_Bus_Convention();
+            csm.receiveBusinessDayConvention = irsm.getPay_Bus_Convention();
+            csm.floatingRateDayCountFraction = irsm.getREC_Accrual_Code();
+            csm.fixedRateDayCountFraction = irsm.getPay_Accrual_Code();
+            csm.floatingRateReference = "0.0";
+            csm.floatingRatePayFreq= irsm.getREC_CPN_Cycle();
+            csm.fixedRatePayFreq = irsm.getPay_CPN_Cycle();
+        }
+
+
+        return csm;
+
+
+    }
+
+
+    public WorkflowStep createNewCdsTrade(CdsCsvModel cdsCsvModel) throws IOException {
+
+
+        CdmUtil cdmUtil = new CdmUtil();
+        IcmaRepoUtil ru = new IcmaRepoUtil();
+        ClearedCdsSwapLifecycle csl = new ClearedCdsSwapLifecycle();
+        ClearedCdsSwapModel cdsm = mapCdsCsvToSwapModel(cdsCsvModel);
+
+        csl.createExecutionInstruction(cdsm);
+
+        ClearedCdsSwapLifecycle clearedCdsSwapLifecycle = new ClearedCdsSwapLifecycle();
+        String businessEventJson=null;
+
+        TradeState tradeState = clearedCdsSwapLifecycle.createExecution(cdsm);
+
+        ExecutionInstruction executionInstruction = clearedCdsSwapLifecycle.createExecutionInstruction(cdsm);
+        PrimitiveInstruction primitiveInstruction = PrimitiveInstruction.builder()
+                .setExecution(executionInstruction)
+                .build();
+
+        BusinessEvent businessEvent = clearedCdsSwapLifecycle.createExecutionBusinessEvent(tradeState, primitiveInstruction);
+
+        businessEventJson = RosettaObjectMapper.getNewRosettaObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(businessEvent);
+
+        String tDate = businessEvent.getEffectiveDate().toString().replaceAll("\\s", "") + "T00:00:00.000+00:00";
+        DateTimeFormatter formatter  = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz");
+        ZonedDateTime zdtWithZoneOffset = ZonedDateTime.parse(tDate, formatter);
+        ZonedDateTime zdtInLocalTimeline = zdtWithZoneOffset.withZoneSameInstant(ZoneId.systemDefault());
+        EventTimestamp eventTimestamp = new EventTimestamp.EventTimestampBuilderImpl()
+                .setDateTime(zdtWithZoneOffset);
+        Party buyer = businessEvent.getAfter().get(0).getTrade().getParty().get(0);
+        Party seller = businessEvent.getAfter().get(0).getTrade().getParty().get(1);
+        Workflow wf = Workflow.builder()
+                .setSteps(List.of(WorkflowStep.builder()
+                        .addParty(List.of(buyer,seller))
+                        .setBusinessEvent(businessEvent)
+                        .addTimestamp(eventTimestamp)
+                        .setPreviousWorkflowStepValue(null)))
+                .build();
+        return wf.getSteps().get(0);
+    }
+    public ClearedCdsSwapModel mapCdsCsvToSwapModel(CdsCsvModel cdsCsvm){
+
+        CdmUtil cdmUtil = new CdmUtil();
+        IcmaRepoUtil ru = new IcmaRepoUtil();
+        Map<String, String> cdmMap = new HashMap<>();
+        CdmEnumMap map = new CdmEnumMap();
+        map.buildEnumMap(cdmMap);
+
+
+        ClearedCdsSwapModel cdsm = new ClearedCdsSwapModel();
+        cdsm.effectiveDate = converDateFormat(cdsCsvm.getED());
+        cdsm.maturityDate = converDateFormat(cdsCsvm.getMD());
+        cdsm.tradeDate = converDateFormat(cdsCsvm.getTD());
+        cdsm.customerAccount = cdsCsvm.getIM_ID();
+        cdsm.currency = cdsCsvm.getCurrency_Code();
+        cdsm.dealId = cdsCsvm.getDPX_Clearing_House_Key();
+        cdsm.centralCounterparty = cdsCsvm.getClearing_House_Code();
+
+
+        cdsm.fixedRatePayer = "CLIENTID";
+        cdsm.quantity = cdsCsvm.getPAY_Leg_Notional();
+        cdsm.fixedRate = cdsCsvm.getFixed_Rate();
+        cdsm.payBusinessDayConvention = cdsCsvm.getBus_Convention();
+        cdsm.fixedRateDayCountFraction = cdsCsvm.getAccrual_Code();
+        cdsm.fixedRatePayFreq= cdsCsvm.getCPN_Cycle();
+        cdsm.referenceObligation = cdsCsvm.getReference_Obligation();
+        cdsm.referenceObligationId = cdsCsvm.getISIN();
+
+
+        return cdsm;
+
+
+    }
+
+    public String converDateFormat(String date){
+
+        String month = date.substring(0,2);
+        String day = date.substring(3,5);
+        String year = date.substring(6,10);
+
+        String newDate = year + "-" + month + "-" + day;
+
+        return newDate;
 
     }
 

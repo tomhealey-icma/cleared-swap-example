@@ -14,6 +14,8 @@ import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.finxis.cdm.crossproductapp.RepoExecutionCreation;
+import com.finxis.cdm.crossproductapp.productmodels.CdsCsvModel;
+import com.finxis.cdm.crossproductapp.productmodels.IrsCsvModel;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.regnosys.rosetta.common.hashing.GlobalKeyProcessStep;
@@ -81,7 +83,7 @@ public class LoadCsvNewTrade {
 
         XMLCreators xmlCreators = new XMLCreators();
 
-        CdmNewTradeWorkflow cdmNewTradeWorkflow = xmlCreators.convertFileWithCsvMap(csvFile,"cdmTrade.xml",',');
+        CdmNewTradeWorkflow cdmNewTradeWorkflow = xmlCreators.convertFileWithCsvMap(csvFile,',');
 
         LoadXmlNewTrade loadXmlNewTrade = new LoadXmlNewTrade();
         workflowStep = loadXmlNewTrade.createNewTrade(cdmNewTradeWorkflow);
@@ -93,11 +95,47 @@ public class LoadCsvNewTrade {
 
         WorkflowStep workflowStep = WorkflowStep.builder();
 
+        XMLCreators xmlCreators = new XMLCreators();
+
+        IrsCsvModel irsCsvModel = xmlCreators.convertIrsFileWithCsvMap(csvFile,"cdmTrade.xml",',');
+
+        LoadXmlNewTrade loadXmlNewTrade = new LoadXmlNewTrade();
+
+        //workflowStep = loadXmlNewTrade.createNewTrade(cdmNewTradeWorkflow);
+
+        workflowStep = loadXmlNewTrade.createNewIrsTrade(irsCsvModel);
+
         return workflowStep;
 
     }
 
     public WorkflowStep createClearedSwapTradeFromCsv2(File csvFile) throws ParserConfigurationException, IOException, SAXException {
+
+        WorkflowStep workflowStep = WorkflowStep.builder();
+
+        return workflowStep;
+
+    }
+
+    public WorkflowStep createClearedCdsSwapTradeFromCsv1(File csvFile) throws ParserConfigurationException, IOException, SAXException {
+
+        WorkflowStep workflowStep = WorkflowStep.builder();
+
+        XMLCreators xmlCreators = new XMLCreators();
+
+        CdsCsvModel cdsCsvModel = xmlCreators.convertCdsFileWithCsvMap(csvFile,"cdmTrade.xml",',');
+
+        LoadXmlNewTrade loadXmlNewTrade = new LoadXmlNewTrade();
+
+        //workflowStep = loadXmlNewTrade.createNewTrade(cdmNewTradeWorkflow);
+
+        workflowStep = loadXmlNewTrade.createNewCdsTrade(cdsCsvModel);
+
+        return workflowStep;
+
+    }
+
+    public WorkflowStep createClearedCdsSwapTradeFromCsv2(File csvFile) throws ParserConfigurationException, IOException, SAXException {
 
         WorkflowStep workflowStep = WorkflowStep.builder();
 

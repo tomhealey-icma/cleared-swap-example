@@ -109,7 +109,7 @@ public class ClearedSwapLifecycle {
 
         //Output used for CDM Test Case
         String executionfuncinputJson = RosettaObjectMapper.getNewRosettaObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(betest);
-        ru.writeEventToFile("cleared-swap-execution-func-input", eventDateTime, executionfuncinputJson);
+        ru.writeEventToFile("cleared-irs-execution-func-input", eventDateTime, executionfuncinputJson);
         //End output for CDM Test Case
 
         Date effectiveDate = primitiveInstruction.getExecution().getProduct().getContractualProduct().getEconomicTerms().getEffectiveDate().getAdjustableDate().getUnadjustedDate();
@@ -122,7 +122,7 @@ public class ClearedSwapLifecycle {
 
         //Output used for CDM Test Case
         String executionfuncoutputJsonJson = RosettaObjectMapper.getNewRosettaObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(businessEvent);
-        ru.writeEventToFile("cleared-swap-execution-func-output", eventDateTime, executionfuncoutputJsonJson);
+        ru.writeEventToFile("cleared-irs-execution-func-output", eventDateTime, executionfuncoutputJsonJson);
         //End output for CDM Test Case
 
         Qualify_Execution.Qualify_ExecutionDefault qe = new Qualify_Execution.Qualify_ExecutionDefault();

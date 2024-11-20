@@ -13,7 +13,7 @@ public class FileWriter {
                 .toString();
         File udir = new File(userDirectory);
         File pudir = udir.getParentFile();
-        String eventlogs = pudir.getPath() + "/eventlogs";
+        String eventlogs = udir.getPath() + "/eventlogs";
 
         File logFile = new File(eventlogs);
         final File log_directory = logFile.getAbsoluteFile();

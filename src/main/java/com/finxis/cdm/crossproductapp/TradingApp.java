@@ -63,9 +63,9 @@ public class TradingApp extends JFrame {
     public Integer actionPanelHeight = 60;
 
     private final static int CLEARED_SWAPS_TAB=0;
-
-    private final static int OUTPUT_TAB= 1;
-    private final static int SETTINGS_TAB= 2;
+    private final static int CLEARED_CDS_SWAPS_TAB=1;
+    private final static int OUTPUT_TAB= 2;
+    private final static int SETTINGS_TAB= 3;
 
 
     public static void main(String[] args) throws IOException, SQLException, InterruptedException {
@@ -154,11 +154,15 @@ public class TradingApp extends JFrame {
 
             JPanel settingsPanel = new JPanel();
             ClearedSwapApp csa = new ClearedSwapApp();
+            ClearedCdsSwapApp cdsm = new ClearedCdsSwapApp();
 
             JPanel clearedSwapTradePanel = csa.buildClearedSwapTicket(this);
+            JPanel clearedCdsSwapTradePanel = cdsm.buildClearedCdsSwapTicket(this);
 
-            tabbedPane.insertTab("Cleared Swaps", null, clearedSwapTradePanel,
+            tabbedPane.insertTab("IRS", null, clearedSwapTradePanel,
                     null, CLEARED_SWAPS_TAB);
+            tabbedPane.insertTab("CDS", null, clearedCdsSwapTradePanel,
+                    null, CLEARED_CDS_SWAPS_TAB);
 
 
             //tabbedPane.addTab("Funds", null, fundsTradePanel,null);

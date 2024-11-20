@@ -40,10 +40,10 @@ public class CsvMapper {
                     csvMap.add(csvField);
 
                     System.out.println(header + "=" + value);
-                }
 
-                col++;
+                    col++;
             }
+        }
             line++;
         }
         return csvMap;
